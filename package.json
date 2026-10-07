@@ -1,0 +1,13 @@
+{
+  "name": "pi-reply-guard",
+  "version": "0.1.0",
+  "description": "Checks each final reply against a list of skills with a classifier model and asks the agent to rewrite failures.",
+  "private": true,
+  "keywords": ["pi-package"],
+  "pi": {
+    "extensions": ["./extensions/reply-guard.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}
