@@ -4,9 +4,8 @@ import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { Text } from "@earendil-works/pi-tui";
 
 interface Config {
-	skills: string[];
+	skills: Record<string, number>;
 	model: string;
-	threshold: number;
 	maxRewrites: number;
 	inject: boolean;
 	debug: boolean;
@@ -18,13 +17,13 @@ const VERDICT = "reply-guard-verdict";
 interface Verdict {
 	name: string;
 	probability?: number;
+	threshold: number;
 	error?: string;
 	failed: boolean;
 }
 const DEFAULTS: Config = {
-	skills: [],
+	skills: {},
 	model: "openrouter/typesafe/jev-1.13",
-	threshold: 0.7,
 	maxRewrites: 2,
 	inject: true,
 	debug: false,
@@ -57,7 +56,7 @@ export default function (pi: ExtensionAPI) {
 		const parts = data.verdicts.map((v) =>
 			v.error
 				? theme.fg("warning", `! ${v.name}: ${v.error}`)
-				: theme.fg(v.failed ? "error" : "success", `${v.failed ? "\u2717" : "\u2713"} ${v.name} ${v.probability?.toFixed(2)}`),
+				: theme.fg(v.failed ? "error" : "success", `${v.failed ? "\u2717" : "\u2713"} ${v.name} ${v.probability?.toFixed(2)} ${v.failed ? "\u2265" : "<"} ${v.threshold.toFixed(2)}`),
 		);
 		return new Text([theme.fg("dim", `${NAME} ${data.model} ${data.ms}ms`), ...parts.map((part) => `  ${part}`)].join("\n"), 1, 0);
 	});
@@ -75,11 +74,11 @@ export default function (pi: ExtensionAPI) {
 		config = loadConfig();
 		specs = new Map();
 		for (const skill of event.systemPromptOptions.skills) {
-			if (config.skills.includes(skill.name)) {
+			if (skill.name in config.skills) {
 				specs.set(skill.name, { text: skillBody(skill.filePath) });
 			}
 		}
-		const missing = config.skills.filter((name) => !specs.has(name));
+		const missing = Object.keys(config.skills).filter((name) => !specs.has(name));
 		if (missing.length > 0 && !warned) {
 			warned = true;
 			ctx.ui.notify(`${NAME}: skills not found: ${missing.join(", ")}`, "warning");
@@ -129,7 +128,8 @@ export default function (pi: ExtensionAPI) {
 				const answer = result.answers.violates;
 				const probability = answer?.type === "bool" ? answer.probability : undefined;
 				const error = result.stopReason === "stop" ? undefined : (result.errorMessage ?? result.stopReason);
-				return { name, probability, error, failed: probability !== undefined && probability >= config.threshold };
+				const threshold = config.skills[name];
+				return { name, probability, threshold, error, failed: probability !== undefined && probability >= threshold };
 			}),
 		);
 		const ms = Date.now() - started;

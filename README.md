@@ -1,6 +1,6 @@
 # pi-reply-guard
 
-Checks each final reply against a list of skills. A classifier model (Jev by default) answers one yes/no question per skill. When a reply breaks a skill, the agent gets the failing skill names and paths and rewrites the reply.
+Checks each final reply against a list of skills. A classifier model (Jev by default) answers one yes/no question per skill. When a reply breaks a skill, the agent gets the failing skill names and rewrites the reply.
 
 ## Install
 
@@ -14,19 +14,27 @@ pi install git:github.com/amalavet/pi-reply-guard
 
 ```json
 {
-  "skills": ["i-have-adhd", "asd-ste100"]
+  "skills": {
+    "i-have-adhd": 0.7,
+    "asd-ste100": 0.7
+  }
 }
 ```
 
 | Key | Default | Meaning |
 |---|---|---|
-| `skills` | `[]` | Names of installed skills to enforce |
+| `skills` | `{}` | Installed skill name to threshold, 0 to 1. A violation probability at or above the threshold fails the reply |
 | `model` | `openrouter/typesafe/jev-1.13` | Classifier model, `provider/id` |
-| `threshold` | `0.7` | Violation probability that fails a reply |
 | `maxRewrites` | `2` | Rewrites per user message |
 | `inject` | `true` | Add the skill text to the system prompt |
 | `debug` | `false` | Show each verdict in the chat: green ✓ on a pass, red ✗ on a fail, with errors. The model does not see it |
 
-The status bar shows the last verdict: `jev-1.13: i-have-adhd 0.12 ✓ · asd-ste100 0.81 ✗ · 310ms`. The number is the probability that the reply breaks the skill.
+A debug verdict shows the probability that the reply breaks each skill, against its threshold:
+
+```
+reply-guard openrouter/typesafe/jev-1.13 337ms
+  ✓ asd-ste100 0.60 < 0.70
+  ✗ i-have-adhd 0.76 ≥ 0.70
+```
 
 The classifier must appear in `models.getAvailableOfType("classifier")`. If it is missing or errors, the reply passes.
