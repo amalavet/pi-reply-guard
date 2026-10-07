@@ -23,7 +23,12 @@ Run `/reply-guard` in Pi to open the settings menu. Select a setting to change i
   "skills": {
     "i-have-adhd": 0.3,
     "ste-plain-writing": 0.5
-  }
+  },
+  "model": "openrouter/typesafe/jev-1.13",
+  "maxRewrites": 2,
+  "inject": false,
+  "debug": false,
+  "showVerdicts": true
 }
 ```
 
