@@ -27,9 +27,9 @@ pi install git:github.com/amalavet/pi-reply-guard
 | `model` | `openrouter/typesafe/jev-1.13` | Classifier model, `provider/id` |
 | `maxRewrites` | `2` | Rewrites per user message |
 | `inject` | `true` | Add the skill text to the system prompt |
-| `debug` | `false` | Show each verdict in the chat: green ✓ on a pass, red ✗ on a fail, with errors. The model does not see it |
+| `debug` | `false` | Store the raw classifier request and response with each verdict, and show the rewrite request. Expand a verdict (`ctrl+o`) to read the raw data |
 
-A debug verdict shows the probability that the reply meets each skill, against its threshold:
+Each check adds a verdict to the chat. The model does not see it. The verdict shows the probability that the reply meets each skill, against its threshold:
 
 ```
 reply-guard openrouter/typesafe/jev-1.13 337ms
