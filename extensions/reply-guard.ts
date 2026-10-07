@@ -56,7 +56,7 @@ export default function (pi: ExtensionAPI) {
 		const parts = data.verdicts.map((v) =>
 			v.error
 				? theme.fg("warning", `! ${v.name}: ${v.error}`)
-				: theme.fg(v.failed ? "error" : "success", `${v.failed ? "\u2717" : "\u2713"} ${v.name} ${v.probability?.toFixed(2)} ${v.failed ? "\u2265" : "<"} ${v.threshold.toFixed(2)}`),
+				: theme.fg(v.failed ? "error" : "success", `${v.failed ? "\u2717" : "\u2713"} ${v.name} ${v.probability?.toFixed(2)} ${v.failed ? "<" : "\u2265"} ${v.threshold.toFixed(2)}`),
 		);
 		return new Text([theme.fg("dim", `${NAME} ${data.model} ${data.ms}ms`), ...parts.map((part) => `  ${part}`)].join("\n"), 1, 0);
 	});
@@ -120,20 +120,20 @@ export default function (pi: ExtensionAPI) {
 					{
 						state: { spec: spec.text, request, reply: draft.slice(0, 16000) },
 						questions: {
-							violates: {
+							meets: {
 								type: "bool",
-								instructions: `Does \`reply\` break a rule in \`spec\`, the "${name}" skill? Apply the exceptions the spec allows for \`request\`. Judge only the reply prose. Code, commands, and quoted text are exempt.`,
-								criteria: { true: "Breaks the spec", false: "Meets the spec" },
+								instructions: `Does \`reply\` meet every rule in \`spec\`, the "${name}" skill? Apply the exceptions the spec allows for \`request\`. Judge only the reply prose. Code, commands, and quoted text are exempt.`,
+								criteria: { true: "Meets the spec", false: "Breaks the spec" },
 							},
 						},
 					},
 					{ signal: ctx.signal },
 				);
-				const answer = result.answers.violates;
+				const answer = result.answers.meets;
 				const probability = answer?.type === "bool" ? answer.probability : undefined;
 				const error = result.stopReason === "stop" ? undefined : (result.errorMessage ?? result.stopReason);
 				const threshold = config.skills[name];
-				return { name, probability, threshold, error, failed: probability !== undefined && probability >= threshold };
+				return { name, probability, threshold, error, failed: probability !== undefined && probability < threshold };
 			}),
 		);
 		const ms = Date.now() - started;
