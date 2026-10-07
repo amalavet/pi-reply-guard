@@ -1,6 +1,10 @@
 # pi-reply-guard
 
-Checks each agent reply against a list of skills. A classifier model (Jev by default) determines if the reply adheres to the skill on a scale of 0-1. If a reply does not adhere to the skill, the agent is prompted to edit their reply to adhere to the skill. 
+Checks each agent reply against a list of skills. A classifier model (Jev by default) determines if the reply adheres to the skill on a scale of 0-1. If a reply does not adhere to the skill, the agent is prompted to edit their reply to adhere to the skill.
+
+## Demo
+
+https://github.com/user-attachments/assets/1285097b-e628-4b07-b417-2b4db6b02b63
 
 ## Install
 
