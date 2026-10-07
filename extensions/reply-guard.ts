@@ -1,4 +1,4 @@
-import { appendFileSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
@@ -8,7 +8,7 @@ interface Config {
 	threshold: number;
 	maxRewrites: number;
 	inject: boolean;
-	log?: string;
+	debug: boolean;
 }
 
 const NAME = "reply-guard";
@@ -18,6 +18,7 @@ const DEFAULTS: Config = {
 	threshold: 0.7,
 	maxRewrites: 2,
 	inject: true,
+	debug: false,
 };
 
 function loadConfig(): Config {
@@ -116,11 +117,9 @@ export default function (pi: ExtensionAPI) {
 			.map((v) => `${v.name} ${v.error ? "err" : `${v.probability?.toFixed(2)} ${v.failed ? "✗" : "✓"}`}`)
 			.join(" · ");
 		ctx.ui.setStatus(NAME, `${config.model.split("/").at(-1)}: ${summary} · ${ms}ms`);
-		if (config.log) {
-			appendFileSync(
-				config.log.replace(/^~(?=\/)/, process.env.HOME ?? "~"),
-				`${JSON.stringify({ time: new Date().toISOString(), model: config.model, ms, rewrite: rewrites, verdicts: verdicts.map(({ path, ...v }) => v) })}\n`,
-			);
+		if (config.debug) {
+			const errors = verdicts.filter((v) => v.error).map((v) => `\n${v.name}: ${v.error}`);
+			ctx.ui.notify(`${NAME} [${config.model}] rewrite ${rewrites}/${config.maxRewrites}: ${summary} \u00b7 ${ms}ms${errors.join("")}`, "info");
 		}
 		const failed = verdicts.filter((verdict) => verdict.failed);
 		if (failed.length === 0) return;

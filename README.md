@@ -25,7 +25,7 @@ pi install git:github.com/amalavet/pi-reply-guard
 | `threshold` | `0.7` | Violation probability that fails a reply |
 | `maxRewrites` | `2` | Rewrites per user message |
 | `inject` | `true` | Add the skill text to the system prompt |
-| `log` | unset | JSONL file for each verdict, e.g. `~/.pi/agent/reply-guard.log` |
+| `debug` | `false` | Show each verdict, with errors, as a notification in the session |
 
 The status bar shows the last verdict: `jev-1.13: i-have-adhd 0.12 ✓ · asd-ste100 0.81 ✗ · 310ms`. The number is the probability that the reply breaks the skill.
 
