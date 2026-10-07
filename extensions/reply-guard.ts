@@ -10,7 +10,7 @@ import {
 	type Skill,
 	type Theme,
 } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import { Box, Text } from "@earendil-works/pi-tui";
 
 const NAME = "reply-guard";
 const VERDICT = "reply-guard-verdict";
@@ -199,12 +199,14 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerEntryRenderer<Check>(VERDICT, (entry, { expanded }, theme) => {
 		if (!entry.data) return new Text("", 0, 0);
-		const header = theme.fg("dim", `${NAME} ${entry.data.model} ${entry.data.ms}ms`);
+		const header = `${theme.fg("customMessageLabel", `[${NAME}]`)} ${theme.fg("dim", `${entry.data.model} ${entry.data.ms}ms`)}`;
 		const lines = entry.data.verdicts.flatMap((verdict) => [
 			`  ${verdictLine(verdict, theme)}`,
 			...(expanded ? rawLines(verdict, theme) : []),
 		]);
-		return new Text([header, ...lines, ...rewriteLines(entry.data, theme)].join("\n"), 1, 0);
+		const box = new Box(1, 1, (text) => theme.bg("customMessageBg", text));
+		box.addChild(new Text([header, ...lines, ...rewriteLines(entry.data, theme)].join("\n"), 0, 0));
+		return box;
 	});
 
 	pi.on("input", () => {
