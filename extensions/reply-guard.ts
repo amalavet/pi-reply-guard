@@ -63,7 +63,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	let config = DEFAULTS;
-	let specs = new Map<string, { path: string; text: string }>();
+	let specs = new Map<string, { text: string }>();
 	let rewrites = 0;
 	let warned = false;
 
@@ -76,7 +76,7 @@ export default function (pi: ExtensionAPI) {
 		specs = new Map();
 		for (const skill of event.systemPromptOptions.skills) {
 			if (config.skills.includes(skill.name)) {
-				specs.set(skill.name, { path: skill.filePath, text: skillBody(skill.filePath) });
+				specs.set(skill.name, { text: skillBody(skill.filePath) });
 			}
 		}
 		const missing = config.skills.filter((name) => !specs.has(name));
@@ -110,7 +110,7 @@ export default function (pi: ExtensionAPI) {
 
 		const request = textOf(messages.findLast((message) => message.role === "user")?.content).slice(0, 4000);
 		const started = Date.now();
-		const verdicts: (Verdict & { path: string })[] = await Promise.all(
+		const verdicts: Verdict[] = await Promise.all(
 			[...specs].map(async ([name, spec]) => {
 				const result = await ctx.modelRegistry.classify(
 					model,
@@ -129,7 +129,7 @@ export default function (pi: ExtensionAPI) {
 				const answer = result.answers.violates;
 				const probability = answer?.type === "bool" ? answer.probability : undefined;
 				const error = result.stopReason === "stop" ? undefined : (result.errorMessage ?? result.stopReason);
-				return { name, path: spec.path, probability, error, failed: probability !== undefined && probability >= config.threshold };
+				return { name, probability, error, failed: probability !== undefined && probability >= config.threshold };
 			}),
 		);
 		const ms = Date.now() - started;
@@ -140,7 +140,7 @@ export default function (pi: ExtensionAPI) {
 		const entries = config.debug
 			? [
 					...event.entries,
-					{ type: "custom" as const, customType: VERDICT, data: { model: config.model, ms, verdicts: verdicts.map(({ path, ...v }) => v) } },
+					{ type: "custom" as const, customType: VERDICT, data: { model: config.model, ms, verdicts } },
 				]
 			: event.entries;
 		const failed = verdicts.filter((verdict) => verdict.failed);
@@ -156,7 +156,7 @@ export default function (pi: ExtensionAPI) {
 					display: true,
 					content: [
 						"Your last reply does not meet these skills:",
-						...failed.map((f) => `- ${f.name} (${f.path})`),
+						...failed.map((f) => `- ${f.name}`),
 						"Rewrite the reply so it meets them. Keep the same facts and conclusions. Send only the rewritten reply.",
 					].join("\n"),
 				},
