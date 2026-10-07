@@ -48,6 +48,7 @@ interface Check {
 	model: string;
 	ms: number;
 	verdicts: Verdict[];
+	rewrite?: string;
 }
 
 type Messages = AgentBeforeSettleEvent["context"]["contextMessages"];
@@ -148,17 +149,21 @@ function verdictEntry(result: Check): CustomEntryDraft {
 	return { type: "custom", customType: VERDICT, data: result };
 }
 
-function rewriteRequest(failed: Verdict[], display: boolean): CustomMessageEntryDraft {
-	return {
-		type: "custom_message",
-		customType: NAME,
-		display,
-		content: [
-			"Your last reply does not meet these skills:",
-			...failed.map((verdict) => `- ${verdict.name}`),
-			"Rewrite the reply so it meets them. Keep the same facts and conclusions. Send only the rewritten reply.",
-		].join("\n"),
-	};
+function rewriteText(failed: Verdict[]): string {
+	return [
+		"Your last reply does not meet these skills:",
+		...failed.map((verdict) => `- ${verdict.name}`),
+		"Rewrite the reply so it meets them. Keep the same facts and conclusions. Send only the rewritten reply.",
+	].join("\n");
+}
+
+function rewriteRequest(text: string): CustomMessageEntryDraft {
+	return { type: "custom_message", customType: NAME, display: false, content: text };
+}
+
+function rewriteLines(result: Check, theme: Theme): string[] {
+	if (!result.rewrite) return [];
+	return ["", ...result.rewrite.split("\n")].map((line) => theme.fg("muted", `  ${line}`));
 }
 
 function verdictLine(verdict: Verdict, theme: Theme): string {
@@ -199,7 +204,7 @@ export default function (pi: ExtensionAPI) {
 			`  ${verdictLine(verdict, theme)}`,
 			...(expanded ? rawLines(verdict, theme) : []),
 		]);
-		return new Text([header, ...lines].join("\n"), 1, 0);
+		return new Text([header, ...lines, ...rewriteLines(entry.data, theme)].join("\n"), 1, 0);
 	});
 
 	pi.on("input", () => {
@@ -226,11 +231,12 @@ export default function (pi: ExtensionAPI) {
 		if (!result) return;
 
 		ctx.ui.setStatus(NAME, statusText(result));
-		const entries = [...event.entries, verdictEntry(result)];
 		const failed = result.verdicts.filter((verdict) => verdict.failed);
-		if (failed.length === 0) return { entries };
+		if (failed.length === 0) return { entries: [...event.entries, verdictEntry(result)] };
 
 		rewrites++;
-		return { entries: [...entries, rewriteRequest(failed, config.debug)], continue: true };
+		const text = rewriteText(failed);
+		const shown = config.debug ? { ...result, rewrite: text } : result;
+		return { entries: [...event.entries, verdictEntry(shown), rewriteRequest(text)], continue: true };
 	});
 }
