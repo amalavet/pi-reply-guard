@@ -10,6 +10,11 @@ export interface Verdict {
 	raw?: { request: unknown; response: unknown };
 }
 
+export interface DebugEvent {
+	event: string;
+	data?: string;
+}
+
 export interface Check {
 	attempt?: number;
 	showVerdicts?: boolean;
@@ -20,6 +25,7 @@ export interface Check {
 	hidden?: string[];
 	reply?: string;
 	failedReply?: string;
+	trace?: DebugEvent[];
 }
 
 type Messages = AgentBeforeSettleEvent["context"]["contextMessages"];
@@ -47,13 +53,18 @@ function classifierRequest(spec: Spec, request: string, reply: string) {
 	};
 }
 
-async function judge(ctx: ExtensionContext, config: Config, spec: Spec, request: string, reply: string): Promise<Verdict> {
+async function judge(ctx: ExtensionContext, config: Config, spec: Spec, request: string, reply: string, record?: (event: string, data: unknown) => void): Promise<Verdict> {
 	const [provider, ...id] = config.model.split("/");
 	const classifier = ctx.modelRegistry.getModelOfType("classifier", provider, id.join("/"));
-	if (!classifier) return { name: spec.name, threshold: spec.threshold, error: `${config.model} not available`, failed: false };
+	if (!classifier) {
+		record?.("classifier_unavailable", { skill: spec.name, model: config.model });
+		return { name: spec.name, threshold: spec.threshold, error: `${config.model} not available`, failed: false };
+	}
 
 	const body = classifierRequest(spec, request, reply);
+	record?.("classifier_request", { skill: spec.name, model: config.model, ...body });
 	const result = await ctx.modelRegistry.classify(classifier, body, { signal: ctx.signal });
+	record?.("classifier_response", { skill: spec.name, ...result });
 	const answer = result.answers.meets;
 	const probability = answer?.type === "bool" && Number.isFinite(answer.probability) && answer.probability >= 0 && answer.probability <= 1
 		? answer.probability : undefined;
@@ -61,12 +72,13 @@ async function judge(ctx: ExtensionContext, config: Config, spec: Spec, request:
 		? (result.errorMessage ?? result.stopReason)
 		: probability === undefined ? "Classifier returned no valid probability." : undefined;
 	const failed = !error && probability !== undefined && probability < spec.threshold;
+	record?.("classifier_verdict", { skill: spec.name, probability, threshold: spec.threshold, error, failed });
 	const raw = config.debug ? { request: body, response: result } : undefined;
 	return { name: spec.name, probability, threshold: spec.threshold, error, failed, raw };
 }
 
-export async function check(ctx: ExtensionContext, config: Config, specs: Spec[], request: string, reply: string): Promise<Check> {
+export async function check(ctx: ExtensionContext, config: Config, specs: Spec[], request: string, reply: string, record?: (event: string, data: unknown) => void): Promise<Check> {
 	const started = Date.now();
-	const verdicts = await Promise.all(specs.map((spec) => judge(ctx, config, spec, request, reply)));
+	const verdicts = await Promise.all(specs.map((spec) => judge(ctx, config, spec, request, reply, record)));
 	return { model: config.model, ms: Date.now() - started, verdicts };
 }

@@ -25,7 +25,7 @@ export const DEFAULTS: Config = {
 	skills: {},
 	model: "openrouter/typesafe/jev-1.13",
 	maxRewrites: 2,
-	inject: true,
+	inject: false,
 	debug: false,
 	showVerdicts: true,
 };

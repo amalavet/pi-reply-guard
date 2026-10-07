@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { getMarkdownTheme, type ExtensionAPI, type ExtensionContext, type Theme } from "@earendil-works/pi-coding-agent";
-import { Box, Container, Markdown, Text } from "@earendil-works/pi-tui";
+import { Box, Container, Markdown, Spacer, Text } from "@earendil-works/pi-tui";
 import { NAME, VERDICT } from "./config.js";
 import type { Check, Verdict } from "./jev.js";
 
@@ -22,6 +22,12 @@ function rawLines(verdict: Verdict, theme: Theme): string[] {
 }
 
 function debugLines(result: Check, theme: Theme): string[] {
+	if (result.trace) {
+		return ["", "Debug trace:", ...result.trace.flatMap((entry, index) => [
+			`${index + 1}. ${entry.event}`,
+			...(entry.data === undefined ? [] : entry.data.split("\n").map((line) => `  ${line}`)),
+		])].map((line) => theme.fg("muted", line));
+	}
 	const lines: string[] = [];
 	if (result.failedReply) lines.push("", "Failed reply:", result.failedReply);
 	if (result.rewrite) lines.push("", result.rewrite);
@@ -55,7 +61,7 @@ export function registerUI(pi: ExtensionAPI, guarding: () => boolean) {
 		const result = entry.data;
 		const content = new Container();
 		if (!result) return content;
-		if (result.showVerdicts === false || result.verdicts.length === 0) {
+		if (result.showVerdicts === false || (result.verdicts.length === 0 && !result.trace?.length)) {
 			if (result.reply) content.addChild(new Markdown(result.reply, 1, 0, getMarkdownTheme()));
 			return content;
 		}
@@ -64,13 +70,16 @@ export function registerUI(pi: ExtensionAPI, guarding: () => boolean) {
 		const header = `${theme.fg("customMessageLabel", `[${NAME}]`)} ${theme.fg("dim", `${attempt}${result.model} ${result.ms}ms`)}`;
 		const lines = result.verdicts.flatMap((verdict) => [
 			`  ${verdictLine(verdict, theme)}`,
-			...(expanded ? rawLines(verdict, theme) : []),
+			...(expanded && !result.trace ? rawLines(verdict, theme) : []),
 		]);
 		const bg = result.verdicts.some((verdict) => verdict.failed) ? "toolErrorBg" : "toolSuccessBg";
 		const box = new Box(1, 1, (text) => theme.bg(bg, text));
 		box.addChild(new Text([header, ...lines, ...(expanded ? debugLines(result, theme) : [])].join("\n"), 0, 0));
 		content.addChild(box);
-		if (result.reply) content.addChild(new Markdown(result.reply, 1, 0, getMarkdownTheme()));
+		if (result.reply) {
+			content.addChild(new Spacer(1));
+			content.addChild(new Markdown(result.reply, 1, 0, getMarkdownTheme()));
+		}
 		return content;
 	});
 
