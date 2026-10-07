@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { appendFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
@@ -8,6 +8,7 @@ interface Config {
 	threshold: number;
 	maxRewrites: number;
 	inject: boolean;
+	log?: string;
 }
 
 const NAME = "reply-guard";
@@ -87,6 +88,7 @@ export default function (pi: ExtensionAPI) {
 		}
 
 		const request = textOf(messages.findLast((message) => message.role === "user")?.content).slice(0, 4000);
+		const started = Date.now();
 		const verdicts = await Promise.all(
 			[...specs].map(async ([name, spec]) => {
 				const result = await ctx.modelRegistry.classify(
@@ -104,11 +106,23 @@ export default function (pi: ExtensionAPI) {
 					{ signal: ctx.signal },
 				);
 				const answer = result.answers.violates;
-				const failed = result.stopReason === "stop" && answer?.type === "bool" && answer.probability >= config.threshold;
-				return failed ? { name, path: spec.path } : undefined;
+				const probability = answer?.type === "bool" ? answer.probability : undefined;
+				const error = result.stopReason === "stop" ? undefined : (result.errorMessage ?? result.stopReason);
+				return { name, path: spec.path, probability, error, failed: probability !== undefined && probability >= config.threshold };
 			}),
 		);
-		const failed = verdicts.filter((verdict) => verdict !== undefined);
+		const ms = Date.now() - started;
+		const summary = verdicts
+			.map((v) => `${v.name} ${v.error ? "err" : `${v.probability?.toFixed(2)} ${v.failed ? "✗" : "✓"}`}`)
+			.join(" · ");
+		ctx.ui.setStatus(NAME, `${config.model.split("/").at(-1)}: ${summary} · ${ms}ms`);
+		if (config.log) {
+			appendFileSync(
+				config.log.replace(/^~(?=\/)/, process.env.HOME ?? "~"),
+				`${JSON.stringify({ time: new Date().toISOString(), model: config.model, ms, rewrite: rewrites, verdicts: verdicts.map(({ path, ...v }) => v) })}\n`,
+			);
+		}
+		const failed = verdicts.filter((verdict) => verdict.failed);
 		if (failed.length === 0) return;
 
 		rewrites++;
