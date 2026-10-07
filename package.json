@@ -1,6 +1,7 @@
 {
   "name": "pi-reply-guard",
   "version": "0.1.0",
+  "type": "module",
   "description": "Checks each final reply against a list of skills with a classifier model and asks the agent to rewrite failures.",
   "license": "MIT",
   "author": "Alejandro Malavet",
@@ -9,7 +10,13 @@
     "url": "git+https://github.com/amalavet/pi-reply-guard.git"
   },
   "homepage": "https://github.com/amalavet/pi-reply-guard#readme",
-  "keywords": ["pi-package"],
+  "bugs": {
+    "url": "https://github.com/amalavet/pi-reply-guard/issues"
+  },
+  "keywords": ["pi-package", "pi-extension", "pi", "reply-guard", "skills"],
+  "publishConfig": {
+    "access": "public"
+  },
   "files": ["extensions", "README.md", "LICENSE"],
   "pi": {
     "extensions": ["./extensions/reply-guard.ts"]
