@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 
 interface Config {
 	skills: string[];
@@ -12,6 +13,14 @@ interface Config {
 }
 
 const NAME = "reply-guard";
+const VERDICT = "reply-guard-verdict";
+
+interface Verdict {
+	name: string;
+	probability?: number;
+	error?: string;
+	failed: boolean;
+}
 const DEFAULTS: Config = {
 	skills: [],
 	model: "openrouter/typesafe/jev-1.13",
@@ -42,6 +51,17 @@ function textOf(content: unknown): string {
 }
 
 export default function (pi: ExtensionAPI) {
+	pi.registerEntryRenderer<{ model: string; ms: number; verdicts: Verdict[] }>(VERDICT, (entry, _options, theme) => {
+		const data = entry.data;
+		if (!data) return new Text("", 0, 0);
+		const parts = data.verdicts.map((v) =>
+			v.error
+				? theme.fg("warning", `! ${v.name}: ${v.error}`)
+				: theme.fg(v.failed ? "error" : "success", `${v.failed ? "\u2717" : "\u2713"} ${v.name} ${v.probability?.toFixed(2)}`),
+		);
+		return new Text(`${theme.fg("dim", `${NAME} ${data.model} ${data.ms}ms`)}  ${parts.join("  ")}`, 1, 0);
+	});
+
 	let config = DEFAULTS;
 	let specs = new Map<string, { path: string; text: string }>();
 	let rewrites = 0;
@@ -90,7 +110,7 @@ export default function (pi: ExtensionAPI) {
 
 		const request = textOf(messages.findLast((message) => message.role === "user")?.content).slice(0, 4000);
 		const started = Date.now();
-		const verdicts = await Promise.all(
+		const verdicts: (Verdict & { path: string })[] = await Promise.all(
 			[...specs].map(async ([name, spec]) => {
 				const result = await ctx.modelRegistry.classify(
 					model,
@@ -117,18 +137,19 @@ export default function (pi: ExtensionAPI) {
 			.map((v) => `${v.name} ${v.error ? "err" : `${v.probability?.toFixed(2)} ${v.failed ? "✗" : "✓"}`}`)
 			.join(" · ");
 		ctx.ui.setStatus(NAME, `${config.model.split("/").at(-1)}: ${summary} · ${ms}ms`);
-		if (config.debug) {
-			const errors = verdicts.filter((v) => v.error).map((v) => `\n${v.name}: ${v.error}`);
-			ctx.ui.notify(`${NAME} [${config.model}] rewrite ${rewrites}/${config.maxRewrites}: ${summary} \u00b7 ${ms}ms${errors.join("")}`, "info");
-		}
+		const entries = config.debug
+			? [
+					...event.entries,
+					{ type: "custom" as const, customType: VERDICT, data: { model: config.model, ms, verdicts: verdicts.map(({ path, ...v }) => v) } },
+				]
+			: event.entries;
 		const failed = verdicts.filter((verdict) => verdict.failed);
-		if (failed.length === 0) return;
+		if (failed.length === 0) return config.debug ? { entries } : undefined;
 
 		rewrites++;
-		ctx.ui.notify(`${NAME}: reply fails ${failed.map((f) => f.name).join(", ")}, asking for a rewrite`, "info");
 		return {
 			entries: [
-				...event.entries,
+				...entries,
 				{
 					type: "custom_message",
 					customType: NAME,
