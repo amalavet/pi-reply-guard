@@ -59,7 +59,7 @@ export default function (pi: ExtensionAPI) {
 				? theme.fg("warning", `! ${v.name}: ${v.error}`)
 				: theme.fg(v.failed ? "error" : "success", `${v.failed ? "\u2717" : "\u2713"} ${v.name} ${v.probability?.toFixed(2)}`),
 		);
-		return new Text(`${theme.fg("dim", `${NAME} ${data.model} ${data.ms}ms`)}  ${parts.join("  ")}`, 1, 0);
+		return new Text([theme.fg("dim", `${NAME} ${data.model} ${data.ms}ms`), ...parts.map((part) => `  ${part}`)].join("\n"), 1, 0);
 	});
 
 	let config = DEFAULTS;
