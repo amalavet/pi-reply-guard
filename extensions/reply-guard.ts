@@ -69,10 +69,14 @@ function loadConfig(): Config {
 	}
 }
 
-function skillBody(path: string): string {
-	return readFileSync(path, "utf8")
-		.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "")
-		.trim();
+function skillBody(path: string): string | undefined {
+	try {
+		return readFileSync(path, "utf8")
+			.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "")
+			.trim();
+	} catch {
+		return undefined;
+	}
 }
 
 function textOf(content: unknown): string {
@@ -84,7 +88,8 @@ function textOf(content: unknown): string {
 function selectSpecs(skills: Skill[], config: Config): Spec[] {
 	return skills
 		.filter((skill) => skill.name in config.skills)
-		.map((skill) => ({ name: skill.name, text: skillBody(skill.filePath), threshold: config.skills[skill.name] }));
+		.map((skill) => ({ name: skill.name, text: skillBody(skill.filePath), threshold: config.skills[skill.name] }))
+		.filter((spec): spec is Spec => spec.text !== undefined);
 }
 
 function missingSkills(config: Config, specs: Spec[]): string[] {

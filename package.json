@@ -3,8 +3,14 @@
   "version": "0.1.0",
   "description": "Checks each final reply against a list of skills with a classifier model and asks the agent to rewrite failures.",
   "license": "MIT",
-  "private": true,
+  "author": "Alejandro Malavet",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amalavet/pi-reply-guard.git"
+  },
+  "homepage": "https://github.com/amalavet/pi-reply-guard#readme",
   "keywords": ["pi-package"],
+  "files": ["extensions", "README.md", "LICENSE"],
   "pi": {
     "extensions": ["./extensions/reply-guard.ts"]
   },
