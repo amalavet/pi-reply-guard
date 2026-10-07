@@ -153,7 +153,7 @@ export default function (pi: ExtensionAPI) {
 				{
 					type: "custom_message",
 					customType: NAME,
-					display: true,
+					display: false,
 					content: [
 						"Your last reply does not meet these skills:",
 						...failed.map((f) => `- ${f.name}`),
