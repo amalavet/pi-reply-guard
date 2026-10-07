@@ -6,9 +6,9 @@ import { registerUI, statusText } from "./ui.js";
 
 function rewriteText(failed: Verdict[]): string {
 	return [
-		"Your last reply does not meet these skills:",
+		"Your last reply does not adhere to the following skills:",
 		...failed.map((verdict) => `- ${verdict.name}`),
-		"Rewrite the reply so it meets them. Keep the same facts and conclusions. Send only the rewritten reply.",
+		"Rewrite the reply in a manner that adheres to these skills.",
 	].join("\n");
 }
 

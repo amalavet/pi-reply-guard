@@ -40,8 +40,8 @@ function classifierRequest(spec: Spec, request: string, reply: string) {
 		questions: {
 			meets: {
 				type: "bool" as const,
-				instructions: `Does \`reply\` meet every rule in \`spec\`, the "${spec.name}" skill, that applies to a chat reply? Apply the exceptions the spec allows for \`request\`. Judge only the reply prose. Code, commands, and quoted text are exempt.`,
-				criteria: { true: "Meets the spec", false: "Breaks the spec" },
+				instructions: `Does the \`reply\` from this agent adhere to the provided spec?`,
+				criteria: { true: "Yes", false: "No" },
 			},
 		},
 	};
