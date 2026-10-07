@@ -78,6 +78,10 @@ export default function (pi: ExtensionAPI) {
 				specs.set(skill.name, { text: skillBody(skill.filePath) });
 			}
 		}
+		if (Object.keys(config.skills).length === 0 && !warned) {
+			warned = true;
+			ctx.ui.notify(`${NAME}: no skills set. Add them to ${join(getAgentDir(), `${NAME}.json`)}`, "info");
+		}
 		const missing = Object.keys(config.skills).filter((name) => !specs.has(name));
 		if (missing.length > 0 && !warned) {
 			warned = true;
