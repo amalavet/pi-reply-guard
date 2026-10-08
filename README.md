@@ -1,5 +1,7 @@
 # pi-reply-guard
 
+[![npm](https://img.shields.io/npm/v/pi-reply-guard)](https://www.npmjs.com/package/pi-reply-guard) [![Pi package](https://img.shields.io/badge/pi-package-blue)](https://pi.dev/packages/pi-reply-guard)
+
 Checks each agent reply against a list of skills. A classifier model (Jev by default) determines if the reply adheres to the skill on a scale of 0-1. If a reply does not adhere to the skill, the agent is prompted to edit their reply to adhere to the skill.
 
 https://github.com/user-attachments/assets/c8c65cf3-3030-44af-88e1-03f897d86447
@@ -23,8 +25,9 @@ Run `/reply-guard` in Pi to open the settings menu. Select a setting to change i
 ```json
 {
   "skills": {
+    "asd-ste100": 0.3,
     "i-have-adhd": 0.3,
-    "ste-plain-writing": 0.5
+    "my-reply-preferences": 0.3
   },
   "model": "openrouter/typesafe/jev-1.13",
   "maxRewrites": 2,
