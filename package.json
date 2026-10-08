@@ -1,6 +1,6 @@
 {
   "name": "pi-reply-guard",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "description": "Checks each final reply against a list of skills with a classifier model and asks the agent to rewrite failures.",
   "license": "MIT",
