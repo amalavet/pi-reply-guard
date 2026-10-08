@@ -6,9 +6,9 @@ import { registerUI, statusText } from "./ui.js";
 
 function rewriteText(failed: Verdict[], skills: Spec[] = []): string {
 	return [
-		"Your last reply does not adhere to the following skills:",
+		"Your last reply was hidden from the end-user because it does not adhere to the following skills:",
 		...failed.map((verdict) => `- ${verdict.name}`),
-		"Rewrite the reply in a manner that adheres to these skills.",
+		"Rewrite the reply in a manner that adheres to these skills. If you have not already read them in full, please do before proceeding.",
 		...(skills.length > 0 ? ["", promptSection(skills)] : []),
 	].join("\n");
 }
