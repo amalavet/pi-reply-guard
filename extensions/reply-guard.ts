@@ -90,7 +90,7 @@ export default function (pi: ExtensionAPI) {
 			hidden,
 			reply: failed.length === 0 ? reply : undefined,
 			failedReply: config.debug && failed.length > 0 ? reply : undefined,
-			rewrite: config.debug && failed.length > 0 ? rewriteText(failed) : undefined,
+			rewrite: config.debug && failed.length > 0 ? rewriteText(failed, config.inject ? specs.filter((spec) => failed.some((verdict) => verdict.name === spec.name)) : []) : undefined,
 		};
 		return { message: { ...message, content } };
 	});
