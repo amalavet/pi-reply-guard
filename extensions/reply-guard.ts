@@ -4,11 +4,12 @@ import { registerConfigCommand } from "./commands.js";
 import { check, lastRequest, textOf, type Check, type DebugEvent, type Verdict } from "./jev.js";
 import { registerUI, statusText } from "./ui.js";
 
-function rewriteText(failed: Verdict[]): string {
+function rewriteText(failed: Verdict[], skills: Spec[] = []): string {
 	return [
 		"Your last reply does not adhere to the following skills:",
 		...failed.map((verdict) => `- ${verdict.name}`),
 		"Rewrite the reply in a manner that adheres to these skills.",
+		...(skills.length > 0 ? ["", promptSection(skills)] : []),
 	].join("\n");
 }
 
@@ -45,16 +46,11 @@ export default function (pi: ExtensionAPI) {
 			warned = true;
 			ctx.ui.notify(`${NAME}: ${warning}`, "warning");
 		}
-		if (!config.inject || specs.length === 0) {
-			record("skill_injection_skipped", { reason: !config.inject ? "inject is false" : "no selected skills" });
-			const loaded = ctx.sessionManager.getBranch().some((entry) => entry.type === "custom_message" && entry.customType === SKILLS);
-			if (!config.preload || specs.length === 0 || loaded) return;
-			const content = promptSection(specs);
-			record("skill_preload", content);
-			return { message: { customType: SKILLS, content, display: true, details: specs.map((spec) => spec.name) } };
-		}
-		event.systemPromptOptions.sections[NAME] = promptSection(specs);
-		record("skill_injection", event.systemPromptOptions.sections[NAME]);
+		const loaded = ctx.sessionManager.getBranch().some((entry) => entry.type === "custom_message" && entry.customType === SKILLS);
+		if (!config.preload || specs.length === 0 || loaded) return;
+		const content = promptSection(specs);
+		record("skill_preload", content);
+		return { message: { customType: SKILLS, content, display: true, details: specs.map((spec) => spec.name) } };
 	});
 
 	pi.on("agent_start", () => record("agent_start"));
@@ -114,7 +110,7 @@ export default function (pi: ExtensionAPI) {
 		}
 
 		rewrites++;
-		const rewrite = rewriteText(failed);
+		const rewrite = rewriteText(failed, config.inject ? specs.filter((spec) => failed.some((verdict) => verdict.name === spec.name)) : []);
 		record("rewrite_requested", { nextAttempt: rewrites + 1, prompt: rewrite });
 		result.trace = config.debug ? trace.splice(0) : undefined;
 		return { entries: [...event.entries, entry, rewriteRequest(rewrite)], continue: true };
