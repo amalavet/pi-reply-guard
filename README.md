@@ -41,7 +41,7 @@ Install the skills separately. Names must match installed skills. No skills are 
 |---|---|---|
 | `skills` | `{}` | Installed skill name that replies must adhere to, with a threshold (0-1) to pass. A reply passes when the probability that it meets the skill is at or above the threshold |
 | `model` | `openrouter/typesafe/jev-1.13` | Classifier model, `provider/id` |
-| `maxRewrites` | `2` | How many time the agent will attempt to rewrite it's response to match the spec. When this is exceeded, the final reply will be given even if it does not pass the guard. |
+| `maxRewrites` | `2` | How many times the agent will attempt to rewrite its response to match the spec. When this is exceeded, the final reply will be given even if it does not pass the guard. |
 | `inject` | `false` | Set to `true` to add the full text of the failed skills to each rewrite request. |
 | `preload` | `true` | Adds the full text of the guarded skills to the context once, at the first prompt of each session. |
 | `debug` | `false` | When this is enabled, you can view the raw requests to jev, the prompts to the agent, and the failed replies. |
