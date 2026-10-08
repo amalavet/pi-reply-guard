@@ -1,5 +1,5 @@
 import type { CustomMessageEntryDraft, ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { CONFIG_PATH, DEFAULTS, NAME, VERDICT, loadConfig, missingSkills, promptSection, selectSpecs, type Spec } from "./config.js";
+import { CONFIG_PATH, DEFAULTS, NAME, SKILLS, VERDICT, loadConfig, missingSkills, promptSection, selectSpecs, type Spec } from "./config.js";
 import { registerConfigCommand } from "./commands.js";
 import { check, lastRequest, textOf, type Check, type DebugEvent, type Verdict } from "./jev.js";
 import { registerUI, statusText } from "./ui.js";
@@ -47,7 +47,11 @@ export default function (pi: ExtensionAPI) {
 		}
 		if (!config.inject || specs.length === 0) {
 			record("skill_injection_skipped", { reason: !config.inject ? "inject is false" : "no selected skills" });
-			return;
+			const loaded = ctx.sessionManager.getBranch().some((entry) => entry.type === "custom_message" && entry.customType === SKILLS);
+			if (!config.preload || specs.length === 0 || loaded) return;
+			const content = promptSection(specs);
+			record("skill_preload", content);
+			return { message: { customType: SKILLS, content, display: true, details: specs.map((spec) => spec.name) } };
 		}
 		event.systemPromptOptions.sections[NAME] = promptSection(specs);
 		record("skill_injection", event.systemPromptOptions.sections[NAME]);

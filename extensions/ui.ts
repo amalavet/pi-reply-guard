@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { getMarkdownTheme, type ExtensionAPI, type ExtensionContext, type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Container, Markdown, Spacer, Text } from "@earendil-works/pi-tui";
-import { NAME, VERDICT } from "./config.js";
+import { NAME, SKILLS, VERDICT } from "./config.js";
 import type { Check, Verdict } from "./jev.js";
 
 function digest(text: string): string {
@@ -81,6 +81,15 @@ export function registerUI(pi: ExtensionAPI, guarding: () => boolean) {
 			content.addChild(new Markdown(result.reply, 1, 0, getMarkdownTheme()));
 		}
 		return content;
+	});
+
+	pi.registerMessageRenderer<string[]>(SKILLS, (message, { expanded }, theme) => {
+		const header = `${theme.fg("customMessageLabel", `[${NAME}]`)} ${theme.fg("dim", "preloaded skills")}`;
+		const lines = (message.details ?? []).map((name) => `  ${theme.fg("success", `\u2713 ${name}`)}`);
+		const body = expanded && typeof message.content === "string" ? ["", theme.fg("muted", message.content)] : [];
+		const box = new Box(1, 1, (text) => theme.bg("customMessageBg", text));
+		box.addChild(new Text([header, ...lines, ...body].join("\n"), 0, 0));
+		return box;
 	});
 
 	function restore(ctx: ExtensionContext) {

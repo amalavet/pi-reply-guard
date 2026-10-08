@@ -29,6 +29,7 @@ Run `/reply-guard` in Pi to open the settings menu. Select a setting to change i
   "model": "openrouter/typesafe/jev-1.13",
   "maxRewrites": 2,
   "inject": false,
+  "preload": true,
   "debug": false,
   "showVerdicts": true
 }
@@ -41,6 +42,7 @@ Install the skills separately. Names must match installed skills. No skills are 
 | `skills` | `{}` | Installed skill name that replies must adhere to, with a threshold (0-1) to pass. A reply passes when the probability that it meets the skill is at or above the threshold |
 | `model` | `openrouter/typesafe/jev-1.13` | Classifier model, `provider/id` |
 | `maxRewrites` | `2` | How many time the agent will attempt to rewrite it's response to match the spec. When this is exceeded, the final reply will be given even if it does not pass the guard. |
-| `inject` | `false` | Set to `true` to inject the entire skill text into the context every time the guard triggers. If this is `false` the guard will only prompt with the name of the skill.|
+| `inject` | `false` | Set to `true` to add the full text of the guarded skills to the system prompt before every prompt. |
+| `preload` | `true` | Adds the full text of the guarded skills to the context once, at the first prompt of each session, and shows a box that lists them. Has no effect when `inject` is `true`. |
 | `debug` | `false` | When this is enabled, you can view the raw requests to jev, the prompts to the agent, and the failed replies. |
 | `showVerdicts` | `true` | By default the guard will show a block containing a short result of the reply guard. You can set this to hide that block. |
