@@ -1,6 +1,6 @@
 # pi-reply-guard
 
-[![npm](https://img.shields.io/npm/v/pi-reply-guard)](https://www.npmjs.com/package/pi-reply-guard) [![Pi package](https://img.shields.io/badge/pi-package-blue)](https://pi.dev/packages/pi-reply-guard)
+[![npm](https://img.shields.io/npm/v/pi-reply-guard)](https://www.npmjs.com/package/pi-reply-guard) [![Pi package](https://img.shields.io/badge/pi-package-blue)](https://pi.dev/packages/pi-reply-guard) [![Downloads](https://img.shields.io/npm/dm/pi-reply-guard)](https://www.npmjs.com/package/pi-reply-guard) [![Stars](https://img.shields.io/github/stars/amalavet/pi-reply-guard)](https://github.com/amalavet/pi-reply-guard/stargazers) [![License](https://img.shields.io/npm/l/pi-reply-guard)](LICENSE)
 
 Checks each agent reply against a list of skills. A classifier model (Jev by default) determines if the reply adheres to the skill on a scale of 0-1. If a reply does not adhere to the skill, the agent is prompted to edit their reply to adhere to the skill.
 
