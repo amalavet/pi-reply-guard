@@ -15,6 +15,7 @@ export function registerConfigCommand(pi: ExtensionAPI) {
 					`Maximum rewrites: ${config.maxRewrites}`,
 					`Show verdicts: ${config.showVerdicts ? "on" : "off"}`,
 					`Inject skill text: ${config.inject ? "on" : "off"}`,
+					`Reinject skill text below: ${config.reinjectBelow}`,
 					`Preload skills: ${config.preload ? "on" : "off"}`,
 					`Debug: ${config.debug ? "on" : "off"}`,
 					"Edit JSON",
@@ -57,9 +58,15 @@ export function registerConfigCommand(pi: ExtensionAPI) {
 						}
 						case 3: next.showVerdicts = !config.showVerdicts; break;
 						case 4: next.inject = !config.inject; break;
-						case 5: next.preload = !config.preload; break;
-						case 6: next.debug = !config.debug; break;
-						case 7: {
+						case 5: {
+							const value = await ctx.ui.input("Reinject skill text when probability is below (0–1, 0 to disable)", String(config.reinjectBelow));
+							if (value === undefined) continue;
+							next.reinjectBelow = value.trim() === "" ? NaN : Number(value);
+							break;
+						}
+						case 6: next.preload = !config.preload; break;
+						case 7: next.debug = !config.debug; break;
+						case 8: {
 							const text = await ctx.ui.editor("Reply guard configuration", JSON.stringify(config, null, 2));
 							if (text === undefined) continue;
 							Object.assign(next, parseConfig(text));

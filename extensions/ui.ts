@@ -12,7 +12,9 @@ function verdictLine(verdict: Verdict, theme: Theme): string {
 	if (verdict.error) return theme.fg("warning", `! ${verdict.name}: ${verdict.error}`);
 	const mark = verdict.failed ? "\u2717" : "\u2713";
 	const compare = verdict.failed ? "<" : "\u2265";
-	const text = `${mark} ${verdict.name} ${verdict.probability?.toFixed(2)} ${compare} ${verdict.threshold.toFixed(2)}`;
+	const below = verdict.reinjectBelow !== undefined && (verdict.probability ?? 1) < verdict.reinjectBelow ? `< ${verdict.reinjectBelow.toFixed(2)} ` : "";
+	const reinjected = verdict.reinjectBelow !== undefined ? " \u00b7 reinjecting full skill" : "";
+	const text = `${mark} ${verdict.name} ${verdict.probability?.toFixed(2)} ${below}${compare} ${verdict.threshold.toFixed(2)}${reinjected}`;
 	return theme.fg(verdict.failed ? "error" : "success", text);
 }
 

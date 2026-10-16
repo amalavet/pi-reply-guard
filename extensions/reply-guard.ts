@@ -29,6 +29,10 @@ export default function (pi: ExtensionAPI) {
 		if (config.debug) trace.push({ event, data: typeof data === "string" ? data : JSON.stringify(data, null, 2) });
 	}
 
+	function injected(failed: Verdict[]): Spec[] {
+		return specs.filter((spec) => failed.some((verdict) => verdict.name === spec.name && (config.inject || (verdict.probability ?? 1) < config.reinjectBelow)));
+	}
+
 	const ui = registerUI(pi, () => specs.length > 0);
 	registerConfigCommand(pi);
 
@@ -90,7 +94,7 @@ export default function (pi: ExtensionAPI) {
 			hidden,
 			reply: failed.length === 0 ? reply : undefined,
 			failedReply: config.debug && failed.length > 0 ? reply : undefined,
-			rewrite: config.debug && failed.length > 0 ? rewriteText(failed, config.inject ? specs.filter((spec) => failed.some((verdict) => verdict.name === spec.name)) : []) : undefined,
+			rewrite: config.debug && failed.length > 0 ? rewriteText(failed, injected(failed)) : undefined,
 		};
 		return { message: { ...message, content } };
 	});
@@ -110,7 +114,9 @@ export default function (pi: ExtensionAPI) {
 		}
 
 		rewrites++;
-		const rewrite = rewriteText(failed, config.inject ? specs.filter((spec) => failed.some((verdict) => verdict.name === spec.name)) : []);
+		const skills = injected(failed);
+		if (!config.inject) for (const verdict of failed) if (skills.some((spec) => spec.name === verdict.name)) verdict.reinjectBelow = config.reinjectBelow;
+		const rewrite = rewriteText(failed, skills);
 		record("rewrite_requested", { nextAttempt: rewrites + 1, prompt: rewrite });
 		result.trace = config.debug ? trace.splice(0) : undefined;
 		return { entries: [...event.entries, entry, rewriteRequest(rewrite)], continue: true };

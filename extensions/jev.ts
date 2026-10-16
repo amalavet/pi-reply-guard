@@ -7,6 +7,7 @@ export interface Verdict {
 	threshold: number;
 	error?: string;
 	failed: boolean;
+	reinjectBelow?: number;
 	raw?: { request: unknown; response: unknown };
 }
 

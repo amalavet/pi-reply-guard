@@ -12,6 +12,7 @@ export interface Config {
 	model: string;
 	maxRewrites: number;
 	inject: boolean;
+	reinjectBelow: number;
 	preload: boolean;
 	debug: boolean;
 	showVerdicts: boolean;
@@ -28,6 +29,7 @@ export const DEFAULTS: Config = {
 	model: "openrouter/typesafe/jev-1.13",
 	maxRewrites: 2,
 	inject: false,
+	reinjectBelow: 0,
 	preload: true,
 	debug: false,
 	showVerdicts: true,
@@ -43,6 +45,7 @@ export function parseConfig(text: string): Config {
 	}
 	if (typeof config.model !== "string" || !/^[^/]+\/.+/.test(config.model)) throw new Error("Model must use provider/id.");
 	if (!Number.isInteger(config.maxRewrites) || config.maxRewrites < 0) throw new Error("maxRewrites must be a nonnegative integer.");
+	if (typeof config.reinjectBelow !== "number" || !Number.isFinite(config.reinjectBelow) || config.reinjectBelow < 0 || config.reinjectBelow > 1) throw new Error("reinjectBelow must be a number from 0 to 1.");
 	if (typeof config.inject !== "boolean" || typeof config.preload !== "boolean" || typeof config.debug !== "boolean" || typeof config.showVerdicts !== "boolean") {
 		throw new Error("inject, preload, debug, and showVerdicts must be booleans.");
 	}
